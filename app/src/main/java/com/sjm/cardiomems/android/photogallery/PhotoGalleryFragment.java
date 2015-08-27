@@ -11,6 +11,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -28,6 +29,7 @@ public class PhotoGalleryFragment extends Fragment {
     private static final String TAG = "PhotoGalleryFragment";
 
     private RecyclerView mPhotoRecyclerView;
+    private Toolbar mLoadingToolbar;
     private List<GalleryItem> mItems = new ArrayList<>();
     private ThumbnailDownloader<PhotoHolder> mThumbnailDownloader;
 
@@ -61,6 +63,8 @@ public class PhotoGalleryFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
+        mLoadingToolbar = (Toolbar)v.findViewById(R.id.toolbar_loading);
+
         mPhotoRecyclerView = (RecyclerView) v.findViewById(R.id.fragment_photo_gallery_recycler_view);
         mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
         mPhotoRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -103,11 +107,6 @@ public class PhotoGalleryFragment extends Fragment {
                 Log.d(TAG, "QueryTextSubmit: " + s);
                 QueryPreferences.setStoredQuery(getActivity(), s);
                 updateItems();
-
-                // dismiss keyboard
-                InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.hideSoftInputFromWindow(getActivity().getCurrentFocus().getWindowToken(), 0);
-
                 return true;
             }
 
@@ -139,10 +138,32 @@ public class PhotoGalleryFragment extends Fragment {
         }
     }
 
+    private void dismissSearchKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        View v = getActivity().getCurrentFocus();
+        if (v != null) {
+            imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+        }
+    }
 
     private void updateItems() {
         String query = QueryPreferences.getStoredQuery(getActivity());
+        // mPhotoRecyclerView.clear
+        showLoadingToolbar();
+        dismissSearchKeyboard();
         new FetchItemsTask(query).execute();
+    }
+
+    private void showLoadingToolbar() {
+        if (mLoadingToolbar != null) {
+            mLoadingToolbar.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideLoadingToolbar() {
+        if (mLoadingToolbar != null) {
+            mLoadingToolbar.setVisibility(View.GONE);
+        }
     }
 
     private void setupAdapter() {
@@ -169,6 +190,7 @@ public class PhotoGalleryFragment extends Fragment {
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
             mItems = items;
+            hideLoadingToolbar();
             setupAdapter();
         }
     }
