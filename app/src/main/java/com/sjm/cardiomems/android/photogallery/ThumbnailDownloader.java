@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.support.v4.util.LruCache;
 import android.util.Log;
 
 import java.io.IOException;
@@ -19,6 +20,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     private ConcurrentMap<T,String> mRequestMap = new ConcurrentHashMap<>();
     private Handler mResponseHandler;
     private ThumbnailDownloadListener<T> mThumbnailDownloadListener;
+    private LruCache imageCache;
 
     public interface ThumbnailDownloadListener<T> {
         void onThumbnailDownloaded(T target, Bitmap thumbnail);
@@ -30,6 +32,8 @@ public class ThumbnailDownloader<T> extends HandlerThread {
     public ThumbnailDownloader(Handler responseHandler) {
         super(TAG);
         mResponseHandler = responseHandler;
+        int maxSize = 50 * 1024 * 1024;
+        imageCache = new LruCache(maxSize);
     }
 
     @Override
@@ -52,9 +56,16 @@ public class ThumbnailDownloader<T> extends HandlerThread {
             if (url == null) {
                 return;
             }
-            byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
-            final Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
-            Log.i(TAG, "Bitmap created");
+            Bitmap tmpBitmap = (Bitmap)imageCache.get(url);
+            if (tmpBitmap == null) {
+                byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
+                tmpBitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
+                imageCache.put(url, tmpBitmap);
+                Log.i(TAG, "Bitmap created");
+            } else {
+                Log.i(TAG, "Bitmap in cache");
+            }
+            final Bitmap bitmap = tmpBitmap;
 
             mResponseHandler.post(new Runnable() {
                 public void run() {
@@ -72,6 +83,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 
     public void clearQueue() {
         mRequestHandler.removeMessages(MESSAGE_DOWNLOAD);
+        imageCache.evictAll();
     }
 
     public void queueThumbnail(T target, String url) {
