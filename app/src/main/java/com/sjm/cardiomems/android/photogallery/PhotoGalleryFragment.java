@@ -81,6 +81,9 @@ public class PhotoGalleryFragment extends Fragment {
 
         @Override
         public int getItemCount() {
+            if (mGalleryItems == null) {
+                return 0; }
+
             return mGalleryItems.size();
         }
     }
