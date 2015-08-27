@@ -1,5 +1,6 @@
 package com.sjm.cardiomems.android.photogallery;
 
+import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -9,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.IOException;
@@ -37,6 +39,16 @@ public class PhotoGalleryFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
         mPhotoRecyclerView = (RecyclerView) v.findViewById(R.id.fragment_photo_gallery_recycler_view);
         mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+        mPhotoRecyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+//                int x = recyclerView.getScrollX();
+//                int y = recyclerView.getScrollY();
+//                Log.d("SCROLL", "X: " + x + " - Y: " + y);
+//                Log.d("SCROLL", "DX: " + dx + " - DY: " + dy);
+            }
+        });
         setupAdapter();
         return v;
     }
@@ -69,8 +81,11 @@ public class PhotoGalleryFragment extends Fragment {
 
         @Override
         public PhotoHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
-            TextView textView = new TextView(getActivity());
-            return new PhotoHolder(textView);
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            View view = layoutInflater.inflate(R.layout.photo_gallery_fragment, viewGroup, false);
+            return new PhotoHolder(view);
+//            TextView textView = new TextView(getActivity());
+//            return new PhotoHolder(textView);
         }
 
         @Override
@@ -90,15 +105,20 @@ public class PhotoGalleryFragment extends Fragment {
 
 
     private class PhotoHolder extends RecyclerView.ViewHolder {
-        private TextView mTitleTextView;
+        private View mView;
+        private ImageView mImageView;
+        // private TextView mTitleTextView;
 
         public PhotoHolder(View itemView) {
             super(itemView);
-            mTitleTextView = (TextView) itemView;
+            mView = itemView;
+            mImageView = (ImageView)itemView.findViewById(R.id.fragment_photo_gallery_image);
+            // mImageView.setImageDrawable(R.drawable.gallery_placeholder);
+            // mTitleTextView = (TextView) itemView;
         }
 
         public void bindGalleryItem(GalleryItem item) {
-            mTitleTextView.setText(item.toString());
+            // mTitleTextView.setText(item.toString());
         }
     }
 
