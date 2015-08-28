@@ -1,5 +1,7 @@
 package com.sjm.cardiomems.android.photogallery;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -7,6 +9,10 @@ import android.support.v7.app.AppCompatActivity;
 
 public abstract class SingleFragmentActivity extends AppCompatActivity {
     protected abstract Fragment createFragment();
+
+    public static Intent newIntent(Context context) {
+        return new Intent(context, PhotoGalleryActivity.class);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
